@@ -113,9 +113,9 @@ namespace nn2
 
             for (int z = 1; z < Layers.Length; z++)
             {
-                for (int i = 0; i < Layers[i].Weights.GetLength(0); i++)
+                for (int i = 0; i < Layers[z].Weights.GetLength(0); i++)
                 {
-                    for (int j = 0; j < Layers[i].Weights.GetLength(1); j++)
+                    for (int j = 0; j < Layers[z].Weights.GetLength(1); j++)
                     {
                         bw.Write(Layers[z].Weights[i, j]);
                     }
@@ -142,9 +142,9 @@ namespace nn2
 
             for (int z = 1; z < Layers.Length; z++)
             {
-                for (int i = 0; i < Layers[i].Weights.GetLength(0); i++)
+                for (int i = 0; i < Layers[z].Weights.GetLength(0); i++)
                 {
-                    for (int j = 0; j < Layers[i].Weights.GetLength(1); j++)
+                    for (int j = 0; j < Layers[z].Weights.GetLength(1); j++)
                     {
                         Layers[z].Weights[i, j] = br.ReadDouble();
                     }
