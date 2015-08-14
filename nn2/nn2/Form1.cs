@@ -20,60 +20,27 @@ namespace nn2
 
         private void button1_Click(object sender, EventArgs e)
         {
-            double[,] Weights = new double[,] { { 1, 2 }, { 3, 4 }, { 5, 6 } };
-            double[,] tw = new double[2, 3];
+            Log("Loading training data...");
 
+            List<byte[]> rawTrainQuestions = MNISTTools.ReadImages("mnist/t10k-images.idx3-ubyte");
+            int[] rawTrainAnswers = MNISTTools.ReadLabels("mnist/t10k-labels.idx1-ubyte");
 
-        }
+            Log("Adjusting training data..");
 
-        private void button2_Click(object sender, EventArgs e)
-        {
-            Log("loading tests data...");
+            List<double[]> trainQuestions = MNISTTools.AdjustImages(MNISTTools.ReadImages("mnist/t10k-images.idx3-ubyte"));
+            List<double[]> trainAnswers = MNISTTools.AdjustLabels(MNISTTools.ReadLabels("mnist/t10k-labels.idx1-ubyte"));
 
-            List<byte[]> rawTestInputs = MNISTTools.ReadImages("mnist/t10k-images.idx3-ubyte");
-            int[] rawTestOutputs = MNISTTools.ReadLabels("mnist/t10k-labels.idx1-ubyte");
+            Log("Loading network..");
 
-            Log("adjusting test data..");
+            NeuralNetwork nn = new NeuralNetwork("nn.txt");
 
-            List<double[]> testInputs = MNISTTools.AdjustImages(MNISTTools.ReadImages("mnist/t10k-images.idx3-ubyte"));
-            List<double[]> testOutputs = MNISTTools.AdjustLabels(MNISTTools.ReadLabels("mnist/t10k-labels.idx1-ubyte"));
-
-            Log("creating check set..");
-            Random r = new Random();
-            List<double[]> csi = new List<double[]>();
-            List<double[]> cso = new List<double[]>();
-            for (int i = 0; i < 1000; i++)
-            {
-                csi.Add(testInputs[i]);
-                cso.Add(testOutputs[i]);
-            }
-
-            Log("data loaded");
-
-            //NeuralLayer nl = new NeuralLayer(testInputs[0].Length, testOutputs[0].Length);
-
-            int hl = 300;
-            NeuralNetwork nn = new NeuralNetwork(new int[] { testInputs[0].Length, hl, testOutputs[0].Length });
-
-            double k = 0.9;
-            double dk = 0.05;
-            Log("dk: " + k + " hl: " + hl);
-            Log(DateTime.Now.ToString());
-            while (k > 0.1)
-            {
-                Log(nn.GlobalError(csi, cso).ToString());
-                TeachSet(testInputs, testOutputs, 0.9, nn);
-                Log("k: " + k.ToString());
-                k -= dk;
-            }
-            Log(DateTime.Now.ToString());
-            Log("testing network");
+            Log("Testing network..");
 
             int correctAnswers = 0;
 
-            for (int i = 0; i < testInputs.Count; i++)
+            for (int i = 0; i < trainQuestions.Count; i++)
             {
-                double[] nnOut = nn.Classify(testInputs[i]);
+                double[] nnOut = nn.Classify(trainQuestions[i]);
 
                 int maxInd = 0;
 
@@ -85,18 +52,91 @@ namespace nn2
                     }
                 }
 
-                if (maxInd == rawTestOutputs[i])
+                if (maxInd == rawTrainAnswers[i])
                 {
                     correctAnswers++;
                 }
             }
 
-            Log("correct answers: " + correctAnswers.ToString());
+            Log("correct answers: " + correctAnswers.ToString() + " / " + trainQuestions.Count);
 
-            Log(DateTime.Now.ToString());
+        }
+
+        private void button2_Click(object sender, EventArgs e)
+        {
+            Log("Loading training data...");
+
+            List<byte[]> rawTrainQuestions = MNISTTools.ReadImages("mnist/t10k-images.idx3-ubyte");
+            int[] rawTrainAnswers = MNISTTools.ReadLabels("mnist/t10k-labels.idx1-ubyte");
+
+            Log("Adjusting training data..");
+
+            List<double[]> trainQuestions = MNISTTools.AdjustImages(MNISTTools.ReadImages("mnist/t10k-images.idx3-ubyte"));
+            List<double[]> trainAnswers = MNISTTools.AdjustLabels(MNISTTools.ReadLabels("mnist/t10k-labels.idx1-ubyte"));
+
+            Log("Creating testing set..");
+
+            List<double[]> testQuestions = new List<double[]>();
+            List<double[]> testAnswers = new List<double[]>();
+            for (int i = 0; i < 1000; i++)
+            {
+                testQuestions.Add(trainQuestions[i]);
+                testAnswers.Add(trainAnswers[i]);
+            }
+
+            Log("Creating network..");
+
+            int hiddenUnits = 20;
+            double kBegin = 0.9;
+            double kDelta = 0.05;
+            double kEnd = 0.1;
+
+            Log("kBegin: " + kBegin + " kDelta: " + kDelta + " kEnd: " + kEnd + " hidden units: " + hiddenUnits);
+
+            NeuralNetwork nn = new NeuralNetwork(new int[] { trainQuestions[0].Length, hiddenUnits, trainAnswers[0].Length });
+            double k = kBegin;
+
+            Log("Teaching network..");
+
+            while (k > kEnd)
+            {
+                TeachSet(trainQuestions, trainAnswers, k, nn);
+                double globalError = nn.GlobalError(testQuestions, testAnswers);
+
+                Log("Global error: " + globalError + " k: " + k);
+                k -= kDelta;
+            }
+
+            Log("Testing network..");
+
+            int correctAnswers = 0;
+
+            for (int i = 0; i < trainQuestions.Count; i++)
+            {
+                double[] nnOut = nn.Classify(trainQuestions[i]);
+
+                int maxInd = 0;
+
+                for (int j = 0; j < nnOut.Length; j++)
+                {
+                    if (nnOut[j] > nnOut[maxInd])
+                    {
+                        maxInd = j;
+                    }
+                }
+
+                if (maxInd == rawTrainAnswers[i])
+                {
+                    correctAnswers++;
+                }
+            }
+
+            Log("correct answers: " + correctAnswers.ToString() + " / " + trainQuestions.Count);
+
+
+            Log("Saving..");
             nn.Save("nn.txt");
-            Log("saved");
-            Log(DateTime.Now.ToString());
+            Log("ok");
         }
 
         private void TeachSet(List<double[]> inputs, List<double[]> outputs, double k, NeuralNetwork nn)
@@ -109,7 +149,7 @@ namespace nn2
 
         private void Log(string s)
         {
-            richTextBox1.AppendText(s + '\n');
+            richTextBox1.AppendText("[" + DateTime.Now.ToString() + "] " + s + '\n');
             Application.DoEvents();
         }
 

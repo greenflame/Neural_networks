@@ -9,20 +9,24 @@ namespace nn2
 {
     class NeuralNetwork
     {
-        public int[] Configuration { get; }
-        private NeuralLayer[] Layers { get; }
+        public int[] Configuration { get; set; }
+        private NeuralLayer[] Layers { get; set; }
 
         public NeuralNetwork(int[] configuration)
         {
-            if (configuration.Length < 2)
-            {
-                throw new Exception("Number of layers less then one");
-            }
-
             Configuration = configuration;
+            CreateLayersFromConfiguration();
+        }
+
+        public NeuralNetwork(string fileName)
+        {
+            Load(fileName);
+        }
+
+        private void CreateLayersFromConfiguration()
+        {
             Layers = new NeuralLayer[Configuration.Length];
 
-            // Creating layers
             for (int i = 0; i < Configuration.Length; i++)
             {
                 if (i == 0)
@@ -98,33 +102,56 @@ namespace nn2
         public void Save(string fileName)
         {
             FileStream fs = new FileStream(fileName, FileMode.Create);
-            StreamWriter sw = new StreamWriter(fs);
+            BinaryWriter bw = new BinaryWriter(fs);
 
-            sw.WriteLine(Layers.Length);
+            bw.Write(Configuration.Length);
 
-            for (int i = 0; i < Layers.Length; i++)
+            for (int i = 0; i < Configuration.Length; i++)
             {
-                sw.WriteLine(Layers[i].Outputs.Length);
-                sw.WriteLine(ArrayToStr(Layers[i].Weights, sw));
+                bw.Write(Configuration[i]);
             }
 
-            sw.Close();
+            for (int z = 1; z < Layers.Length; z++)
+            {
+                for (int i = 0; i < Layers[i].Weights.GetLength(0); i++)
+                {
+                    for (int j = 0; j < Layers[i].Weights.GetLength(1); j++)
+                    {
+                        bw.Write(Layers[z].Weights[i, j]);
+                    }
+                }
+            }
+
+            bw.Close();
         }
 
-        private string ArrayToStr(double[,] arr, StreamWriter sw)
+        public void Load(string fileName)
         {
-            StringBuilder sb = new StringBuilder();
+            FileStream fs = new FileStream(fileName, FileMode.Open);
+            BinaryReader br = new BinaryReader(fs);
 
-            for (int i = 0; i < arr.GetLength(0); i++)
+            int configurationLength = br.ReadInt32();
+            Configuration = new int[configurationLength];
+
+            for (int i = 0; i < Configuration.Length; i++)
             {
-                for (int j = 0; j < arr.GetLength(1); j++)
-                {
-                    sw.Write(arr[i, j] + " ");
-                }
-                sw.WriteLine();
+                Configuration[i] = br.ReadInt32();
             }
 
-            return sb.ToString();
+            CreateLayersFromConfiguration();
+
+            for (int z = 1; z < Layers.Length; z++)
+            {
+                for (int i = 0; i < Layers[i].Weights.GetLength(0); i++)
+                {
+                    for (int j = 0; j < Layers[i].Weights.GetLength(1); j++)
+                    {
+                        Layers[z].Weights[i, j] = br.ReadDouble();
+                    }
+                }
+            }
+
+            br.Close();
         }
 
     }
