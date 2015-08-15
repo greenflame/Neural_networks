@@ -13,6 +13,7 @@ public:
     ~MnistReader();
 
     static QVector<QImage> readImages(const QString &fileName);
+    static QVector<QVector<int> > readImagesBytes(const QString &fileName);
     static QVector<int> readLabels(const QString &fileName);
 };
 

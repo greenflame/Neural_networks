@@ -30,11 +30,22 @@ void MainWindow::on_pushButton_test_clicked()
         {1,1,1,1,0,1,1,1,1,0,0,1,1,1,1} // 9
     };
 
-    int outputs[10] = {1,0,1,0,1,0,1,0,1,0};
+    int outputs[10][3] = {
+        {1, 1, 0},
+        {0, 1, 0},
+        {1, 1, 1},
+        {0, 1, 1},
+        {1, 1, 0},
+        {0, 0, 0},
+        {1, 0, 1},
+        {0, 0, 1},
+        {1, 0, 0},
+        {0, 0, 0}
+    };
 
-    Perceptron perceptron(15, 0);
+    NeuralLayer nl(15, 3);
 
-    int iterations = 10;
+    int iterations = 100;
     for (int z = 0; z < iterations; z++)
     {
         int errors = 0;
@@ -45,22 +56,27 @@ void MainWindow::on_pushButton_test_clicked()
             {
                 input.append(inputs[i][j]);
             }
-            int output = outputs[i];
 
-            int answer = perceptron.classify(input);
+            QVector<int> output;
+            for (int j = 0; j < 3; j++)
+            {
+                output.append(outputs[i][j]);
+            }
 
-            if (answer != output)
+            QVector<int> answer = nl.classify(input);
+
+            if (!vecEqual(answer, output))
             {
                 errors++;
             }
 
             ui->textEdit_output->append("Input: " + vecToStr(input) +
-                    " Output: " + QString::number(output) +
-                    " Answer: " + QString::number(answer));
+                    " Output: " + vecToStr(output) +
+                    " Answer: " + vecToStr(answer));
 
-            ui->textEdit_output->append("Weights before: " + vecToStr(perceptron.weights()));
-            perceptron.teach(input, output);
-            ui->textEdit_output->append("Weights after_: " + vecToStr(perceptron.weights()));
+            ui->textEdit_output->append("Weights before: " + vecToStr(nl.weights()));
+            nl.teach(input, output);
+            ui->textEdit_output->append("Weights after_: " + vecToStr(nl.weights()));
         }
         if (errors == 0)
         {
@@ -76,65 +92,53 @@ void MainWindow::on_pushButton_test_clicked()
 
 void MainWindow::on_pushButton_mnist_clicked()
 {
-    QString imagesFileName = QFileDialog::getOpenFileName(this, "Images");
-    QVector<QImage> images = MnistReader::readImages(imagesFileName);
-    ui->label->setPixmap(QPixmap::fromImage(images[0]));
-//    ui->textEdit_output->append(QString::number(images.length()));
-    ui->textEdit_output->append(vecToStr(imgToBits(images[0])));
+    QString s = QFileDialog::getOpenFileName(this, "images");
 
-//    QString labelsFileName = QFileDialog::getOpenFileName(this, "Labels");
-    //    ui->textEdit_output->append(vecToStr(MnistReader::readLabels(labelsFileName)));
+    QVector<QImage> i1 = MnistReader::readImages(s);
+    QVector<QVector<int> > i2 = MnistReader::readImagesBytes(s);
+
+    ui->textEdit_output->append(vecToStr(imgToBits(i1[0])));
+    ui->textEdit_output->append(vecToStr(i2[0]));
 }
 
 void MainWindow::on_pushButton_start_clicked()
 {
-    ui->textEdit_output->append("Teach stage");
+    ui->textEdit_output->append("Teach stage.");
 
-    QString trainImagesFileName = QFileDialog::getOpenFileName(this, "Train images");
-    QVector<QImage> images = MnistReader::readImages(trainImagesFileName);
+    QVector<QImage> trainImages = MnistReader::readImages(QFileDialog::getOpenFileName(this, "Train images"));
+    QVector<int> trainLabels = MnistReader::readLabels(QFileDialog::getOpenFileName(this, "Train labels"));
 
-    ui->textEdit_output->append("Images loaded");
+    ui->textEdit_output->append("Train tests loaded.");
 
-    QString trainLabelsFileName = QFileDialog::getOpenFileName(this, "Train labels");
-    QVector<int> labels = MnistReader::readLabels(trainLabelsFileName);
-
-    ui->textEdit_output->append("Labels loaded");
-
-    Perceptron perceptron(28 * 28 * 8, 0);
-
-    if (images.length() != labels.length())
+    if (trainImages.length() != trainLabels.length())
     {
-        ui->textEdit_output->append("Bad lengths");
+        ui->textEdit_output->append("Bad lengths.");
         return;
     }
 
-    for (int i = 0; i < images.length(); i++)
+    NeuralLayer neuralLayer(28 * 28 * 8, 10);
+
+    for (int i = 0; i < trainImages.length(); i++)
     {
-        int answer = labels.at(i) == 5 ? 1 : 0;
-        perceptron.teach(imgToBits(images.at(i)), answer);
+        neuralLayer.teach(imgToBits(trainImages.at(i)), numToBits(trainLabels.at(i)));
         if (i % 1000 ==  0)
         {
-            ui->textEdit_output->append(tr("%0 / %1 completed").arg(i + 1).arg(images.length()));
+            ui->textEdit_output->append(tr("Training [%0 / %1] complete.").arg(i).arg(trainImages.length()));
             qApp->processEvents();
         }
     }
 
-    ui->textEdit_output->append("Check stage");
+    ui->textEdit_output->append("Training complete.");
+    ui->textEdit_output->append("Check stage.");
 
-    QString checkImagesFileName = QFileDialog::getOpenFileName(this, "Train images");
-    QVector<QImage> checkImages = MnistReader::readImages(checkImagesFileName);
+    QVector<QImage> checkImages = MnistReader::readImages(QFileDialog::getOpenFileName(this, "Test images"));
+    QVector<int> checkLabels = MnistReader::readLabels(QFileDialog::getOpenFileName(this, "Test labels"));
 
-    ui->textEdit_output->append("Images loaded");
-
-    QString checkLabelsFileName = QFileDialog::getOpenFileName(this, "Train labels");
-    QVector<int> checkLabels = MnistReader::readLabels(checkLabelsFileName);
-
-    ui->textEdit_output->append("Labels loaded");
-
+    ui->textEdit_output->append("Check tests loaded");
 
     if (checkImages.length() != checkLabels.length())
     {
-        ui->textEdit_output->append("Bad lengths");
+        ui->textEdit_output->append("Bad lengths.");
         return;
     }
 
@@ -142,10 +146,9 @@ void MainWindow::on_pushButton_start_clicked()
 
     for (int i = 0; i < checkImages.length(); i++)
     {
-        int answer = checkLabels.at(i) == 5 ? 1 : 0;
-        int out = perceptron.classify(imgToBits(checkImages.at(i)));
+        QVector<int> networkOutput = neuralLayer.classify(imgToBits(checkImages.at(i)));
 
-        if (answer == out)
+        if (vecEqual(numToBits(checkLabels.at(i)), networkOutput))
         {
             succes++;
         }
@@ -156,13 +159,32 @@ void MainWindow::on_pushButton_start_clicked()
 
         if (i % 1000 ==  0)
         {
-            ui->textEdit_output->append(tr("%0 / %1 check completed").arg(i + 1).arg(checkImages.length()));
+            ui->textEdit_output->append(tr("%0 / %1 check completed").arg(i).arg(checkImages.length()));
             qApp->processEvents();
         }
     }
 
-    ui->textEdit_output->append(tr("succes: %0 errors: %1").arg(succes).arg(errors));
-    ui->textEdit_output->append(vecToStr(perceptron.weights()));
+    ui->textEdit_output->append(tr("Testing complete."));
+    ui->textEdit_output->append(tr("Succes: %0 errors: %1").arg(succes).arg(errors));
+    ui->textEdit_output->append(vecToStr(neuralLayer.weights()));
+}
+
+bool MainWindow::vecEqual(QVector<int> v1, QVector<int> v2)
+{
+    if (v1.length() != v2.length())
+    {
+        return false;
+    }
+
+    for (int i = 0; i < v1.length(); i++)
+    {
+        if (v1.at(i) != v2.at(i))
+        {
+            return false;
+        }
+    }
+
+    return true;
 }
 
 QString MainWindow::vecToStr(const QVector<int> &vector)
@@ -199,6 +221,25 @@ QVector<int> MainWindow::imgToBits(const QImage &image)
                 result.append(QString(strRep[k]).toInt());
             }
         }
+    }
+
+    return result;
+}
+
+QVector<int> MainWindow::numToBits(int number)
+{
+    QVector<int> result;
+
+    for (int i = 0; i < number; i++)
+    {
+        result.append(0);
+    }
+
+    result.append(1);
+
+    while (result.length() < 10)
+    {
+        result.append(0);
     }
 
     return result;

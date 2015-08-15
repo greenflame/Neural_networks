@@ -15,10 +15,12 @@ TEMPLATE = app
 SOURCES += main.cpp\
         mainwindow.cpp \
     perceptron.cpp \
-    mnistreader.cpp
+    mnistreader.cpp \
+    neurallayer.cpp
 
 HEADERS  += mainwindow.h \
     perceptron.h \
-    mnistreader.h
+    mnistreader.h \
+    neurallayer.h
 
 FORMS    += mainwindow.ui

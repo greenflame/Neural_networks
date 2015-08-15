@@ -14,6 +14,7 @@
 
 #include <perceptron.h>
 #include <mnistreader.h>
+#include <neurallayer.h>
 
 namespace Ui {
 class MainWindow;
@@ -35,8 +36,11 @@ public slots:
 private:
     Ui::MainWindow *ui;
 
+    bool vecEqual(QVector<int> v1, QVector<int> v2);
     QString vecToStr(const QVector<int> &vector);
+
     QVector<int> imgToBits(const QImage &image);
+    QVector<int> numToBits(int number);
 };
 
 #endif // MAINWINDOW_H
