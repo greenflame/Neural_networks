@@ -1,0 +1,9 @@
+C:\Users\Alexandr\Documents\neural_networks\nn2\nn2\bin\Release\nn2.exe.config
+C:\Users\Alexandr\Documents\neural_networks\nn2\nn2\bin\Release\nn2.exe
+C:\Users\Alexandr\Documents\neural_networks\nn2\nn2\bin\Release\nn2.pdb
+C:\Users\Alexandr\Documents\neural_networks\nn2\nn2\obj\Release\nn2.Form1.resources
+C:\Users\Alexandr\Documents\neural_networks\nn2\nn2\obj\Release\nn2.Properties.Resources.resources
+C:\Users\Alexandr\Documents\neural_networks\nn2\nn2\obj\Release\nn2.csproj.GenerateResource.Cache
+C:\Users\Alexandr\Documents\neural_networks\nn2\nn2\obj\Release\nn2.exe
+C:\Users\Alexandr\Documents\neural_networks\nn2\nn2\obj\Release\nn2.pdb
+C:\Users\Alexandr\Documents\neural_networks\nn2\nn2\obj\Release\nn2.csprojResolveAssemblyReference.cache
