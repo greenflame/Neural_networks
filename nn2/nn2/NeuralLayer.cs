@@ -9,8 +9,6 @@ namespace nn2
 {
     class NeuralLayer
     {
-        public NeuralLayer PrevLayer { get; set; }
-
         public double[] Outputs { get; set; }
         public double[] Delta { get; set; }
 
@@ -22,13 +20,11 @@ namespace nn2
             Delta = new double[outputsCount];
 
             Weights = new double[inputsCount, outputsCount];    // Row - input; column - output
-
-            RandomizeWeights(-1, 1);
         }
 
-        public void Classify()
+        public void CalculateOutputs(double[] inputs)
         {
-            MultiplyHVectorMatrix(PrevLayer.Outputs, Outputs, Weights);
+            MultiplyHVectorMatrix(inputs, Outputs, Weights);
 
             for (int i = 0; i < Outputs.Length; i++)
             {
@@ -36,13 +32,13 @@ namespace nn2
             }
         }
 
-        public void LearnByDelta(double k)
+        public void Learn(double[] inputs, double k)    // Uses delta
         {
             for (int i = 0; i < Outputs.Length; i++)
             {
-                for (int j = 0; j < PrevLayer.Outputs.Length; j++)
+                for (int j = 0; j < inputs.Length; j++)
                 {
-                    Weights[j, i] = Weights[j, i] + k * Delta[i] * PrevLayer.Outputs[j] * Outputs[i] * (1 - Outputs[i]);
+                    Weights[j, i] = Weights[j, i] + k * Delta[i] * inputs[j] * Outputs[i] * (1 - Outputs[i]);
                 }
             }
         }
@@ -55,12 +51,12 @@ namespace nn2
             }
         }
 
-        public void CalculateDeltaForPrevLayer()
+        public void CalculateDeltaForPrevLayer(double[] prevDelta)
         {
-            MultiplyHVectorTrMatrix(Delta, PrevLayer.Delta, Weights);
+            MultiplyHVectorTrMatrix(Delta, prevDelta, Weights);
         }
 
-        private void RandomizeWeights(double minVal, double maxVal)
+        public void RandomizeWeights(double minVal, double maxVal)
         {
             Random r = new Random();
 

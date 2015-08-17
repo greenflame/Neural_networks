@@ -15,7 +15,9 @@ namespace nn2
         public NeuralNetwork(int[] configuration)
         {
             Configuration = configuration;
+
             CreateLayersFromConfiguration();
+            RandomizeWeights(-1, 1);
         }
 
         public NeuralNetwork(string fileName)
@@ -25,29 +27,29 @@ namespace nn2
 
         private void CreateLayersFromConfiguration()
         {
-            Layers = new NeuralLayer[Configuration.Length];
+            Layers = new NeuralLayer[Configuration.Length - 1];
 
-            for (int i = 0; i < Configuration.Length; i++)
+            for (int i = 0; i < Layers.Length; i++)
             {
-                if (i == 0)
-                {
-                    Layers[i] = new NeuralLayer(0, Configuration[i]);   // First layer only for outputs
-                }
-                else
-                {
-                    Layers[i] = new NeuralLayer(Configuration[i - 1], Configuration[i]);
-                    Layers[i].PrevLayer = Layers[i - 1];    // Linking layers
-                }
+                Layers[i] = new NeuralLayer(Configuration[i], Configuration[i + 1]);
             }
         }
 
-        public double[] Classify(double[] input)
+        private void RandomizeWeights(double minVal, double maxVal)
         {
-            Layers[0].Outputs = input;
+            foreach (NeuralLayer layer in Layers)
+            {
+                layer.RandomizeWeights(minVal, maxVal);
+            }
+        }
+
+        public double[] Classify(double[] inputs)
+        {
+            Layers[0].CalculateOutputs(inputs);
 
             for (int i = 1; i < Layers.Length; i++)
             {
-                Layers[i].Classify();
+                Layers[i].CalculateOutputs(Layers[i - 1].Outputs);
             }
 
             return Layers[Layers.Length - 1].Outputs;   // todo return copy?
@@ -57,17 +59,15 @@ namespace nn2
         {
             Classify(input);
 
-            Layers[Layers.Length - 1].CalculateDeltaBaseOnTarget(output);
+            Layers[Layers.Length - 1].CalculateDeltaBaseOnTarget(output);   // Last layer
 
-            for (int i = Layers.Length - 1; i > 0; i--)
+            for (int i = Layers.Length - 1; i > 0; i--) // Hidden layers
             {
-                if (i != 1)
-                {
-                    Layers[i].CalculateDeltaForPrevLayer();
-                }
-
-                Layers[i].LearnByDelta(k);
+                Layers[i].CalculateDeltaForPrevLayer(Layers[i - 1].Delta);
+                Layers[i].Learn(Layers[i - 1].Outputs, k);
             }
+
+            Layers[0].Learn(input, k);   // First layer
         }
 
         public double LocalError(double[] input, double[] target)
@@ -111,7 +111,7 @@ namespace nn2
                 bw.Write(Configuration[i]);
             }
 
-            for (int z = 1; z < Layers.Length; z++)
+            for (int z = 0; z < Layers.Length; z++)
             {
                 for (int i = 0; i < Layers[z].Weights.GetLength(0); i++)
                 {
@@ -140,7 +140,7 @@ namespace nn2
 
             CreateLayersFromConfiguration();
 
-            for (int z = 1; z < Layers.Length; z++)
+            for (int z = 0; z < Layers.Length; z++)
             {
                 for (int i = 0; i < Layers[z].Weights.GetLength(0); i++)
                 {

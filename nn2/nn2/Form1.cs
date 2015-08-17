@@ -130,5 +130,27 @@ namespace nn2
             Application.DoEvents();
         }
 
+        private void button1_Click_1(object sender, EventArgs e)
+        {
+            NeuralNetwork nn = new NeuralNetwork(new int[] { 784, 20, 100, 10, 10 });
+
+            Log("Loading testing set..");
+
+            List<double[]> testQuestions = MNISTTools.AdjustImages(MNISTTools.ReadImages("mnist/t10k-images.idx3-ubyte")).GetRange(0, 1000);
+            List<double[]> testAnswers = MNISTTools.AdjustLabels(MNISTTools.ReadLabels("mnist/t10k-labels.idx1-ubyte")).GetRange(0, 1000);
+
+            Log("Testing network..");
+
+            double correctAnswers = TestNetwork(testQuestions, testAnswers, nn);
+            Log("Correct answers: " + correctAnswers);
+
+            nn.Save("lst.bin");
+            NeuralNetwork nn2 = new NeuralNetwork("lst.bin");
+
+            Log("Testing network..");
+
+            correctAnswers = TestNetwork(testQuestions, testAnswers, nn2);
+            Log("Correct answers: " + correctAnswers);
+        }
     }
 }

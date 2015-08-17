@@ -1,0 +1,7 @@
+nn2/nn2/bin/Debug/mnist/t10k-images.idx3-ubyte
+nn2/nn2/bin/Debug/mnist/t10k-labels.idx1-ubyte
+nn2/nn2/bin/Debug/mnist/train-images.idx3-ubyte
+nn2/nn2/bin/Debug/mnist/train-labels.idx1-ubyte
+nn2/nn2/bin/Release/mnist/train-images.idx3-ubyte
+nn2/nn2/bin/Release/mnist/t10k-labels.idx1-ubyte
+nn2/nn2/bin/Release/mnist/train-labels.idx1-ubyte
